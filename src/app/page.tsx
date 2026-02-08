@@ -18,12 +18,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Truck, AlertTriangle, CheckCircle2, Clock } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-// Updated Type Definition including new columns
+// Updated Type Definition
 type Truck = {
   id: string
   truck_number: string
@@ -68,16 +68,36 @@ export default function Dashboard() {
   }
 
   const getBadgeColor = (status: string) => {
-    if (status === 'QUALITY_FLAGGED') return "bg-red-100 text-red-800 border-red-200"
-    if (status === 'DISPATCHED') return "bg-green-100 text-green-800"
-    if (status === 'LOADING') return "bg-yellow-100 text-yellow-800"
-    return "bg-zinc-100 text-zinc-800"
+    if (status === 'QUALITY_FLAGGED') return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300"
+    if (status === 'DISPATCHED') return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+    if (status === 'LOADING') return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+    return "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
   }
+
+  // --- STATS CALCULATIONS ---
+  const totalTrucks = trucks.length
+  // Sum of net weight (if it exists)
+  const totalWeight = trucks.reduce((sum, t) => sum + (t.net_weight_kg || 0), 0)
+  // Average Moisture (only for trucks that have a moisture reading)
+  const trucksWithMoisture = trucks.filter(t => t.moisture_percent)
+  const avgMoisture = trucksWithMoisture.length > 0 
+    ? (trucksWithMoisture.reduce((sum, t) => sum + (t.moisture_percent || 0), 0) / trucksWithMoisture.length).toFixed(1) 
+    : "0"
+
+  // Fake chart data for now (You can make this real later)
+  const chartData = [
+    { time: '09:00', trucks: 2 },
+    { time: '10:00', trucks: 5 },
+    { time: '11:00', trucks: 3 },
+    { time: '12:00', trucks: 8 },
+    { time: '13:00', trucks: 4 },
+  ]
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
+        {/* HEADER */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -95,6 +115,82 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* 1. STATS CARDS ROW */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* Card 1: Total Weight */}
+          <Card className="border-l-4 border-l-blue-500 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-500">Total Cotton In (Today)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{totalWeight.toLocaleString()} <span className="text-lg text-zinc-400 font-normal">kg</span></div>
+              <p className="text-xs text-green-600 mt-1 flex items-center">
+                <span className="bg-green-100 px-1 rounded mr-1">↑</span> Live Tonnage
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Active Trucks */}
+          <Card className="border-l-4 border-l-orange-500 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-500">Vehicles in Premises</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{trucks.filter(t => t.status !== 'DISPATCHED').length}</div>
+              <p className="text-xs text-zinc-500 mt-1">Currently loading/unloading</p>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Quality Health */}
+          <Card className="border-l-4 border-l-purple-500 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-500">Avg. Moisture Level</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold flex items-center gap-2">
+                {avgMoisture}% 
+                {Number(avgMoisture) > 8.5 && <AlertTriangle className="h-6 w-6 text-red-500" />}
+              </div>
+              <p className="text-xs text-zinc-500 mt-1">Target: &lt; 8.5%</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 2. CHART SECTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 shadow-sm">
+            <CardHeader>
+              <CardTitle>Hourly Truck Arrivals</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <XAxis dataKey="time" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ background: '#18181b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    cursor={{ fill: 'transparent' }}
+                  />
+                  <Bar dataKey="trucks" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          
+          {/* You can put a smaller "Recent Alerts" card here later */}
+          <Card className="bg-zinc-900 text-white flex flex-col justify-center items-center p-6 text-center space-y-4">
+             <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
+                <Truck className="h-8 w-8 text-white" />
+             </div>
+             <div>
+               <h3 className="font-bold text-lg">System Healthy</h3>
+               <p className="text-zinc-400 text-sm">All gates and weighbridges online.</p>
+             </div>
+          </Card>
+        </div>
+
+        {/* 3. THE MAIN TABLE */}
         <Card className="shadow-xl">
           <CardHeader className="bg-zinc-50 dark:bg-zinc-900/50 border-b">
             <CardTitle>Live Fleet Overview</CardTitle>

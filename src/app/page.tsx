@@ -19,11 +19,14 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Truck, AlertTriangle, CheckCircle2, Clock } from "lucide-react"
+import { MoreHorizontal, Truck, AlertTriangle, CheckCircle2, Clock, Printer } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { generateGatePass } from "@/lib/generateGatePass"
+// OR import { generateGatePass } from "../lib/generateGatePass"
 
-// Updated Type Definition
+
 type Truck = {
   id: string
   truck_number: string
@@ -44,7 +47,7 @@ export default function Dashboard() {
       .from('trucks')
       .select('*')
       .order('entry_time', { ascending: false })
-    
+
     if (data) setTrucks(data)
   }
 
@@ -54,7 +57,7 @@ export default function Dashboard() {
     const channel = supabase
       .channel('realtime-trucks')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trucks' }, () => {
-        fetchTrucks() 
+        fetchTrucks()
       })
       .subscribe()
 
@@ -80,8 +83,8 @@ export default function Dashboard() {
   const totalWeight = trucks.reduce((sum, t) => sum + (t.net_weight_kg || 0), 0)
   // Average Moisture (only for trucks that have a moisture reading)
   const trucksWithMoisture = trucks.filter(t => t.moisture_percent)
-  const avgMoisture = trucksWithMoisture.length > 0 
-    ? (trucksWithMoisture.reduce((sum, t) => sum + (t.moisture_percent || 0), 0) / trucksWithMoisture.length).toFixed(1) 
+  const avgMoisture = trucksWithMoisture.length > 0
+    ? (trucksWithMoisture.reduce((sum, t) => sum + (t.moisture_percent || 0), 0) / trucksWithMoisture.length).toFixed(1)
     : "0"
 
   // Fake chart data for now (You can make this real later)
@@ -96,7 +99,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        
+
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <div>
@@ -117,7 +120,7 @@ export default function Dashboard() {
 
         {/* 1. STATS CARDS ROW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
+
           {/* Card 1: Total Weight */}
           <Card className="border-l-4 border-l-blue-500 shadow-sm">
             <CardHeader className="pb-2">
@@ -149,7 +152,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold flex items-center gap-2">
-                {avgMoisture}% 
+                {avgMoisture}%
                 {Number(avgMoisture) > 8.5 && <AlertTriangle className="h-6 w-6 text-red-500" />}
               </div>
               <p className="text-xs text-zinc-500 mt-1">Target: &lt; 8.5%</p>
@@ -168,7 +171,7 @@ export default function Dashboard() {
                 <BarChart data={chartData}>
                   <XAxis dataKey="time" fontSize={12} tickLine={false} axisLine={false} />
                   <YAxis fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ background: '#18181b', border: 'none', borderRadius: '8px', color: '#fff' }}
                     cursor={{ fill: 'transparent' }}
                   />
@@ -177,16 +180,16 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          
+
           {/* You can put a smaller "Recent Alerts" card here later */}
           <Card className="bg-zinc-900 text-white flex flex-col justify-center items-center p-6 text-center space-y-4">
-             <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
-                <Truck className="h-8 w-8 text-white" />
-             </div>
-             <div>
-               <h3 className="font-bold text-lg">System Healthy</h3>
-               <p className="text-zinc-400 text-sm">All gates and weighbridges online.</p>
-             </div>
+            <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
+              <Truck className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">System Healthy</h3>
+              <p className="text-zinc-400 text-sm">All gates and weighbridges online.</p>
+            </div>
           </Card>
         </div>
 
@@ -216,7 +219,7 @@ export default function Dashboard() {
                     <TableCell className="text-zinc-500 font-mono text-xs">
                       {new Date(truck.entry_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </TableCell>
-                    
+
                     {/* Weight Column */}
                     <TableCell>
                       {truck.net_weight_kg ? (
@@ -257,6 +260,11 @@ export default function Dashboard() {
                           <DropdownMenuItem onClick={() => updateStatus(truck.id, 'DISPATCHED')}>
                             Mark Dispatched
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateGatePass(truck)}>
+                            <Printer className="mr-2 h-4 w-4 text-blue-600" />
+                            Print Gate Pass
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -15,7 +15,7 @@ export function Sidebar() {
   ]
 
   return (
-    <div className="h-screen w-64 bg-zinc-900 text-white flex flex-col fixed left-0 top-0 border-r border-zinc-800">
+  <div className="hidden md:flex h-screen w-64 bg-zinc-900 text-white flex-col fixed left-0 top-0 border-r border-zinc-800">
       {/* Logo Area */}
       <div className="p-6 border-b border-zinc-800">
         <h1 className="text-xl font-bold tracking-wider text-blue-500">SHREEDHAR<span className="text-white">OPS</span></h1>

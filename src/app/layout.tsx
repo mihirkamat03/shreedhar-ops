@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// 1. IMPORT THE SIDEBAR
 import { Sidebar } from "@/components/Sidebar";
+import { MobileNav } from "@/components/MobileNav"; // <--- Import the new component
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,15 +26,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex bg-zinc-50 dark:bg-zinc-950`}
-      >
-        {/* 2. PLACE THE SIDEBAR HERE */}
-        <Sidebar />
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col md:flex-row bg-zinc-50 dark:bg-zinc-950`}>
+        
+        {/* MOBILE: Show Top Bar, Hide Sidebar */}
+        <MobileNav />
 
-        {/* 3. WRAP THE PAGE CONTENT */}
-        {/* 'ml-64' pushes the content to the right so it doesn't hide behind the sidebar */}
-        <main className="flex-1 ml-64 p-8 w-full">
+        {/* DESKTOP: Show Sidebar, Hide Mobile Nav */}
+        <div className="hidden md:flex">
+          <Sidebar />
+        </div>
+
+        {/* MAIN CONTENT AREA */}
+        {/* On Mobile: No left margin (ml-0), small padding (p-4) */}
+        {/* On Desktop: Left margin for sidebar (md:ml-64), normal padding (md:p-8) */}
+        <main className="flex-1 w-full ml-0 md:ml-64 p-4 md:p-8">
           {children}
         </main>
       </body>
